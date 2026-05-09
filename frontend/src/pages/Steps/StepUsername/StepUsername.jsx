@@ -1,9 +1,9 @@
 import React from 'react'
 
-function StepAvatar() {
+function StepUsername() {
   return (
-    <div>UserName</div>
+    <div>StepUsername</div>
   )
 }
 
-export default StepAvatar
+export default StepUsername
