@@ -8,7 +8,7 @@ class AuthController {
     async sendOtp(req, res) {
         const { phone } = req.body;
         if (!phone) {
-            res.status(400).json({ message: 'Phone field is required!' });
+            return res.status(400).json({ message: 'Phone field is required!' });
         }
         //generate otp
         const otp = await otpService.generateOtp();
@@ -19,15 +19,15 @@ class AuthController {
         const hash = hashService.hashOtp(data); //hash OTP
 
         try {
-            await otpService.sendBySms(phone, otp);
-            res.json({
+            // await otpService.sendBySms(phone, otp);
+            return res.json({
                 hash: `${hash}.${expires}`,
                 phone,
                 otp,
             });
         } catch (err) {
             console.log(err);
-            res.status(500).json({ message: 'message sending failed' });
+            return res.status(500).json({ message: 'message sending failed' });
         }
     }
 
@@ -35,18 +35,18 @@ class AuthController {
     async verifyOtp(req, res) {
         const { otp, hash, phone } = req.body;
         if (!otp || !hash || !phone) {
-            res.status(400).json({ message: 'All fields are required!' });
+            return res.status(400).json({ message: 'All fields are required!' });
         }
 
         const [hashedOtp, expires] = hash.split('.');
         if (Date.now() > +expires) {
-            res.status(400).json({ message: 'OTP expired!' });
+            return res.status(400).json({ message: 'OTP expired!' });
         }
 
         const data = `${phone}.${otp}.${expires}`;
         const isValid = otpService.verifyOtp(hashedOtp, data);
         if (!isValid) {
-            res.status(400).json({ message: 'Invalid OTP' });
+            return res.status(400).json({ message: 'Invalid OTP' });
         }
 
         let user;
@@ -54,10 +54,11 @@ class AuthController {
             user = await userService.findUser({ phone });
             if (!user) {
                 user = await userService.createUser({ phone });
+                console.log("User created successfully")
             }
         } catch (err) {
             console.log(err);
-            res.status(500).json({ message: 'Db error' });
+            return res.status(500).json({ message: 'Db error' });
         }
 
         const { accessToken, refreshToken } = tokenService.generateTokens({
@@ -70,8 +71,8 @@ class AuthController {
             httpOnly: true,
         });
 
-        // const userDto = new UserDto(user);
-        res.json({ accessToken});
+        const userDto = new UserDto(user);
+        return res.json({ accessToken, user: userDto });
     }
 
     
