@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# logs
+logs
+*.log
+
+# env files
+.env
+
+# mac files
+.DS_Store
+
+# build folders
+dist/
+build/
+
+# coverage
+coverage/
+
+# vscode
+.vscode/
+
+# package locks if needed
+# package-lock.json
+# yarn.lock
