@@ -1,4 +1,3 @@
-
 import './App.css'
 import './App.css';
 import {
@@ -11,18 +10,15 @@ import {
 import Home from './pages/Home/Home';
 import Navigation from './components/shared/navigation/Navigation';
 import Authenticate from './pages/Authenticate/Authenticate';
-import { useSelector } from 'react-redux';
 import Rooms from './pages/Rooms/Rooms';
+import { useSelector } from 'react-redux';
+import Activate from './pages/Activate/Activate';
 
-const isAuth = false;
-const user = {
-    activated : true
-}
+
+
 function App() {
 
   return (
-    <>
-    
     <BrowserRouter>
     <Navigation/>
         <Routes>
@@ -44,7 +40,7 @@ function App() {
                 path="/activate"
                 element={
                     <SemiProtectedRoute>
-                        <Authenticate />
+                        <Activate />
                     </SemiProtectedRoute>}
             />
             <Route
@@ -58,14 +54,13 @@ function App() {
 
         </Routes>
     </BrowserRouter>
-    </>
 
 );
 }
 
 const GuestRoute = ({ children }) => {
 
-    // const { isAuth } = useSelector((state) => state.auth);  //value from redux store
+    const { isAuth } = useSelector((state) => state.auth);  //value from redux store
 
     const location = useLocation();
     if (isAuth) {
@@ -84,7 +79,7 @@ const GuestRoute = ({ children }) => {
 
 
 const SemiProtectedRoute = ({ children }) => {
-    // const { user, isAuth } = useSelector((state) => state.auth);
+    const { user, isAuth } = useSelector((state) => state.auth);
     const location = useLocation();
     if (!isAuth) {
         return (
@@ -110,7 +105,7 @@ const SemiProtectedRoute = ({ children }) => {
 
 
 const ProtectedRoute = ({ children }) => {
-    // const { user, isAuth } = useSelector((state) => state.auth);
+    const { user, isAuth } = useSelector((state) => state.auth);
     const location = useLocation();
     if (!isAuth) {
         return (
