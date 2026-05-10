@@ -17,7 +17,7 @@ const Home = () => {
         navigate('/authenticate');
     }
     return (
-        <div className={styles.cardWrapper}>
+        <div className="cardWrapper">
             <Card title="Welcome to Resonate!" icon="logo">
                 <p className={styles.text}>
                 A space where talk feels natural and ideas flow freely. Join a room, share your voice, and find the people who speak your language, all in real time.
