@@ -12,6 +12,44 @@ const api = axios.create({
 // List of all the endpoints
 export const sendOtp = (data) => api.post('/api/send-otp', data);
 export const verifyOtp = (data) => api.post('/api/verify-otp', data);
-export const activate = (data) => api.post('/api/activate', data);
+export const activate = (data) =>
+    api.post('/api/activate', data, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+
+api.interceptors.response.use(
+    (config) => {
+        return config;
+    },
+    async (error) => {
+        const originalRequest = error.config;
+        if (
+            error.response.status === 401 &&
+            originalRequest &&
+            !originalRequest.isRetry
+        ) {
+            originalRequest.isRetry = true;
+            try {
+                await axios.get(
+                    `${import.meta.env.VITE_API_URL}/api/refresh`,
+                    {
+                        withCredentials: true,
+                    }
+                );
+
+                return api.request(originalRequest);
+            } catch (err) {
+                console.log(err.message);
+            }
+        }
+        throw error;
+    }
+);
+
+export const logout = () =>
+    api.post("/api/logout");
+
 
 export default api;
