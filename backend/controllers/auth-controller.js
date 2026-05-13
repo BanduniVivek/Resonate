@@ -145,7 +145,7 @@ class AuthController {
         res.clearCookie('refreshToken');
         res.clearCookie('accessToken');
         res.json({ user: null, auth: false });
-        console.log("logged out successfully")
+        
     }
 
     
