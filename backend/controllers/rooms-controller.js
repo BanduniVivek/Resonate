@@ -29,7 +29,6 @@ class RoomsController {
 
     async show(req, res) {
         const room = await roomService.getRoom(req.params.roomId);
-
         return res.json(room);
     }
 }

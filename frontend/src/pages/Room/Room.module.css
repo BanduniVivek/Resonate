@@ -71,6 +71,11 @@
     gap: 30px;
 }
 
+.client h4{
+    font-weight : bold;
+    margin-top : 1rem;
+}
+
 .actionBtn {
     background: #262626;
     outline: none;

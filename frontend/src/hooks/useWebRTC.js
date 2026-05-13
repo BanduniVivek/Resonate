@@ -28,6 +28,9 @@ export const useWebRTC = (roomId, user) =>{
         socket.current = socketInit();
     }, []);
 
+    useEffect(() => {
+        clientsRef.current = clients;
+    }, [clients]);
 
     const provideRef = (instance, userId) => {
         audioElements.current[userId] = instance;
@@ -251,12 +254,78 @@ export const useWebRTC = (roomId, user) =>{
     }, []);
 
 
+    // handle mute and unmute
+    useEffect(() => {
+        socket.current.on(ACTIONS.MUTE, ({ peerId, userId }) => {
+            console.log('muting', userId);
+            setMute(true, userId);
+        });
+
+        socket.current.on(ACTIONS.UNMUTE, ({ peerId, userId }) => {
+            console.log('unmuting', userId);
+            setMute(false, userId);
+        });
+
+        const setMute = (mute, userId) => {
+            const clientIdx = clientsRef.current
+                .map((client) => client.id)
+                .indexOf(userId);
+
+            // console.log('idx', clientIdx);
+
+            // const connectedClients = clientsRef.current.filter(
+            //     (client) => client.id !== userId
+            // );
+
+            const connectedClientsClone = JSON.parse(
+                JSON.stringify(clientsRef.current)
+            );
+
+            if (clientIdx > -1) {
+                connectedClientsClone[clientIdx].muted = mute;
+                console.log('muuuu', connectedClientsClone);
+                setClients((_) => connectedClientsClone);
+            }
+        };
+    }, []);
+
+    const handleMute = (isMute, userId) => {
+        let settled = false;
+        console.log("mute", isMute);
+
+        if (userId === user.id) {
+            let interval = setInterval(() => {
+                if (localMediaStream.current) {
+                    localMediaStream.current.getTracks()[0].enabled = !isMute;
+                    if (isMute) {
+                        socket.current.emit(ACTIONS.MUTE, {
+                            roomId,
+                            userId: user.id,
+                        });
+                    } else {
+                        socket.current.emit(ACTIONS.UNMUTE, {
+                            roomId,
+                            userId: user.id,
+                        });
+                    }
+                    // console.log(
+                    //     'localMediaStream ',
+                    //     localMediaStream.current.getTracks()
+                    // );
+                    settled = true;
+                }
+                if (settled) {
+                    clearInterval(interval);
+                }
+            }, 200);
+        }
+    };
+
+
     return {
         clients,
         provideRef,
-        // handleMute,
+        handleMute,
         localStream: localMediaStream.current,
     };
-
-    
 }
