@@ -10,31 +10,44 @@
     align-items: center;
 }
 
-.heading {
-    font-size: 20px;
-    font-weight: bold;
-}
-
 .searchBox {
     background: #262626;
     margin-left: 20px;
     display: flex;
     align-items: center;
-    padding: 0 10px;
-    min-width: 300px;
+    padding: 0 12px;
+    min-width: 280px;
+    max-width: 420px;
+    flex: 1;
     border-radius: 20px;
+    border: 1px solid #333;
+}
+
+.searchBox img {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    opacity: 0.75;
 }
 
 .searchInput {
     background: transparent;
     border: none;
     outline: none;
-    padding: 10px;
+    padding: 10px 10px 10px 8px;
     color: #fff;
     width: 100%;
+    font-size: 15px;
+    font-family: inherit;
+}
+
+.searchInput::placeholder {
+    color: #888;
 }
 
 .heading {
+    font-size: 20px;
+    font-weight: bold;
     position: relative;
 }
 
@@ -46,6 +59,10 @@
     width: 60%;
     height: 4px;
     background: #0077ff;
+}
+
+.right {
+    flex-shrink: 0;
 }
 
 .startRoomButton {
@@ -72,4 +89,12 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     margin-top: 60px;
+}
+
+.emptyHint {
+    grid-column: 1 / -1;
+    color: #888;
+    font-size: 16px;
+    text-align: center;
+    padding: 32px 16px;
 }

@@ -1,19 +1,10 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useStateWithCallback } from './useStateWithCallback';
 import socketInit from '../socket';
 import freeice from 'freeice';
 import { ACTIONS } from '../actions';
-// const users = [
-//     {
-//         id: 1,
-//         name : 'rakesh'
-//     },
-//     {
-//         id: 2,
-//         name : 'vivek'
-//     }
-// ]
-export const useWebRTC = (roomId, user) =>{
+
+export const useWebRTC = (roomId, user, roomOwnerId, onRoomEnded) => {
     const [clients, setClients] = useStateWithCallback([]);
        //set client can now also have a callback
 
@@ -23,6 +14,8 @@ export const useWebRTC = (roomId, user) =>{
     const socket = useRef(null);  //Stores Socket.IO connection.
     const localMediaStream = useRef(null);  //Stores your microphone audio stream.
     const clientsRef = useRef([]);  //Stores latest clients array
+    const onRoomEndedRef = useRef(onRoomEnded);
+    const userRef = useRef(user);
 
     useEffect(() => {
         socket.current = socketInit();
@@ -35,44 +28,6 @@ export const useWebRTC = (roomId, user) =>{
     const provideRef = (instance, userId) => {
         audioElements.current[userId] = instance;
     };
-
-    //start capturing
-    useEffect(() => {
-        const startCapture = async () => {
-            // Start capturing local audio stream.
-            localMediaStream.current =
-                await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                });
-        };
-
-        startCapture().then(() => {
-            // add user to clients list
-            addNewClient({ ...user, muted: true }, () => {
-                const localElement = audioElements.current[user.id];
-                if (localElement) {
-                    localElement.volume = 0;
-                    localElement.srcObject = localMediaStream.current;
-                }
-            });
-            console.log("joined")
-            // Emit the action to join
-            socket.current.emit(ACTIONS.JOIN, {
-                roomId,
-                user,
-            });
-        });
-
-        // Leaving the room
-        //cleanupfunction works when the room component unmounts
-        return () => {
-            localMediaStream.current
-                .getTracks()
-                .forEach((track) => track.stop());
-            socket.current.emit(ACTIONS.LEAVE, { roomId });
-        };
-    }, []);
-
 
     const addNewClient = useCallback(
         (newClient, cb) => {
@@ -89,8 +44,70 @@ export const useWebRTC = (roomId, user) =>{
                 );
             }
         },
-        [clients, setClients]
+        [setClients]
     );
+
+    
+    useEffect(() => {
+        userRef.current = user;
+    }, [user]);
+
+    
+    useEffect(() => {
+        onRoomEndedRef.current = onRoomEnded;
+    }, [onRoomEnded]);
+
+    useEffect(() => {
+        const handler = (payload) => {
+            onRoomEndedRef.current?.(payload?.message);
+        };
+        if (!socket.current) return undefined;
+        socket.current.on(ACTIONS.ROOM_ENDED, handler);
+        return () => {
+            socket.current?.off(ACTIONS.ROOM_ENDED, handler);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!roomOwnerId) return undefined;
+
+        const startCapture = async () => {
+            localMediaStream.current =
+                await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                });
+        };
+
+        let cancelled = false;
+
+        startCapture().then(() => {
+            if (cancelled || !socket.current) return;
+            const u = userRef.current;
+            addNewClient({ ...u, muted: true }, () => {
+                const localElement = audioElements.current[u.id];
+                if (localElement) {
+                    localElement.volume = 0;
+                    localElement.srcObject = localMediaStream.current;
+                }
+            });
+            socket.current.emit(ACTIONS.JOIN, {
+                roomId,
+                user: u,
+                ownerId: roomOwnerId,
+            });
+        });
+
+        return () => {
+            cancelled = true;
+            if (localMediaStream.current) {
+                localMediaStream.current
+                    .getTracks()
+                    .forEach((track) => track.stop());
+                localMediaStream.current = null;
+            }
+            socket.current?.emit(ACTIONS.LEAVE, { roomId });
+        };
+    }, [roomId, user?.id, roomOwnerId]);
 
      // Handle new peer
     useEffect(()=>{
@@ -233,15 +250,15 @@ export const useWebRTC = (roomId, user) =>{
 
     //handle remove peer
     useEffect(() => {
-        const handleRemovePeer = ({ peerID, userId }) => {
-            console.log('leaving', peerID, userId);
+        const handleRemovePeer = ({ peerId, userId }) => {
+            console.log('leaving', peerId, userId);
 
-            if (connections.current[peerID]) {
-                connections.current[peerID].close();
+            if (connections.current[peerId]) {
+                connections.current[peerId].close();
             }
 
-            delete connections.current[peerID];
-            delete audioElements.current[peerID];
+            delete connections.current[peerId];
+            delete audioElements.current[peerId];
 
             setClients((list) => list.filter((c) => c.id !== userId));
         };
@@ -256,12 +273,12 @@ export const useWebRTC = (roomId, user) =>{
 
     // handle mute and unmute
     useEffect(() => {
-        socket.current.on(ACTIONS.MUTE, ({ peerId, userId }) => {
+        socket.current.on(ACTIONS.MUTE, ({ userId }) => {
             console.log('muting', userId);
             setMute(true, userId);
         });
 
-        socket.current.on(ACTIONS.UNMUTE, ({ peerId, userId }) => {
+        socket.current.on(ACTIONS.UNMUTE, ({ userId }) => {
             console.log('unmuting', userId);
             setMute(false, userId);
         });
@@ -289,7 +306,7 @@ export const useWebRTC = (roomId, user) =>{
         };
     }, []);
 
-    const handleMute = (isMute, userId) => {
+    const handleMute = useCallback((isMute, userId) => {
         let settled = false;
         console.log("mute", isMute);
 
@@ -319,13 +336,20 @@ export const useWebRTC = (roomId, user) =>{
                 }
             }, 200);
         }
-    };
+    }, [roomId]);
+
+    useEffect(() => {
+        return () => {
+            Object.values(connections.current).forEach(pc => pc?.close());
+            connections.current = {};
+            audioElements.current = {};
+        };
+    }, []);
 
 
     return {
         clients,
         provideRef,
         handleMute,
-        localStream: localMediaStream.current,
     };
 }

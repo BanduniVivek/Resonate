@@ -9,4 +9,5 @@ export const ACTIONS = {
     ICE_CANDIDATE: 'ice-candidate',
     MUTE: 'mute',
     UNMUTE: 'unmute',
+    ROOM_ENDED: 'room-ended',
 };

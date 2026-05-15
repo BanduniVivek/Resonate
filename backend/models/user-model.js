@@ -7,6 +7,20 @@ const userSchema = new Schema(
         name: { type: String, required: false },
         avatar: { type: String, required: false },
         activated: { type: Boolean, required: false, default: false },
+        bio: {
+            type: String,
+            default: ""
+         },
+         
+         followers: [{
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+         }],
+         
+         following: [{
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+         }]
     },
     {
         timestamps: true,

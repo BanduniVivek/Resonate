@@ -1,4 +1,3 @@
-import './App.css'
 import './App.css';
 import {
     BrowserRouter,
@@ -16,6 +15,7 @@ import Activate from './pages/Activate/Activate';
 import { useLoadingWithRefresh } from './hooks/useLoadingWithRefresh';
 import Loader from './components/shared/Loader/Loader';
 import Room from './pages/Room/Room';
+import Profile from './pages/Profile/Profile';
 
 
 
@@ -63,6 +63,13 @@ function App() {
                 element={
                     <ProtectedRoute>
                         <Room />
+                    </ProtectedRoute>}
+            />
+            <Route
+                path="/profile/:userId"
+                element={
+                    <ProtectedRoute>
+                        <Profile />
                     </ProtectedRoute>}
             />
 

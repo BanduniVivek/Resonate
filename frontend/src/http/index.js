@@ -17,7 +17,7 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
         if (
-            error.response.status === 401 &&
+            error.response?.status === 401 &&
             originalRequest &&
             !originalRequest.isRetry
         ) {
@@ -52,7 +52,27 @@ export const activate = (data) =>
 export const logout = () =>api.post("/api/logout");
 export const createRoom = (data) => api.post('/api/rooms', data);
 export const getAllRooms = () => api.get('/api/rooms');
+export const searchRooms = (query) =>
+    api.get('/api/rooms/search', { params: { query } });
 export const getRoom = (roomId) => api.get(`/api/rooms/${roomId}`);
 
+export const getProfile = (userId) => api.get(`/api/profile/${userId}`);
+
+export const followUser = (userId) => api.post(`/api/follow/${userId}`);
+
+export const unfollowUser = (userId) => api.post(`/api/unfollow/${userId}`);
+
+export const searchUsers = (query) =>
+    api.get('/api/search', { params: { query } });
+
+export const updateProfile = (formData) =>
+    api.put('/api/profile', formData, {
+        transformRequest: [
+            (data, headers) => {
+                delete headers['Content-Type'];
+                return data;
+            },
+        ],
+    });
 
 export default api;

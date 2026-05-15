@@ -123,3 +123,30 @@
 
 .micImg {
 }
+
+.roomEndedBanner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3000;
+    padding: 18px 20px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(90deg, #0077ff, #5453e0);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.loadingHint,
+.loadError {
+    color: #aaa;
+    margin-top: 2rem;
+    font-size: 16px;
+}
+
+.loadError {
+    color: #ff8a8a;
+    margin-bottom: 1rem;
+}

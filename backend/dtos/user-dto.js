@@ -3,6 +3,7 @@ class UserDto {
     phone;
     name;
     avatar;
+    bio;
     activated;
     createdAt;
 
@@ -11,6 +12,7 @@ class UserDto {
         this.phone = user.phone;
         this.name = user.name;
         this.avatar = user.avatar;
+        this.bio = user.bio ?? '';
         this.activated = user.activated;
         this.createdAt = user.createdAt;
     }

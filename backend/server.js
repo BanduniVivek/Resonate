@@ -13,6 +13,7 @@ const io = require('socket.io')(server, {
     },
 });
 const ACTIONS = require('./actions');
+const roomService = require('./services/room-service');
 
 
 app.use(cookieParser());
@@ -38,28 +39,33 @@ app.get('/', (req, res) => {
 
 // Sockets
 const socketUserMap = {};
+const socketRoomMeta = {};
+
+function idsEqual(a, b) {
+    if (a == null || b == null) return false;
+    return String(a) === String(b);
+}
+
 io.on('connection', (socket) => {
     console.log('New connection', socket.id);
-    socket.on(ACTIONS.JOIN, ({ roomId, user }) => {
+    socket.on(ACTIONS.JOIN, ({ roomId, user, ownerId }) => {
         socketUserMap[socket.id] = user;
+        socketRoomMeta[socket.id] = {
+            voiceRoomId: roomId,
+            roomOwnerId:
+                ownerId !== undefined && ownerId !== null
+                    ? String(ownerId)
+                    : '',
+        };
 
-        // console.log('Map', socketUserMap);
-
-        // get all the clients from io adapter
-        // console.log('joining');
         const clients = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
-        // console.log('All connected clients', clients, io.sockets.adapter.rooms);
-        // Add peers and offers and all
 
         clients.forEach((clientId) => {
-
             io.to(clientId).emit(ACTIONS.ADD_PEER, {
                 peerId: socket.id,
                 createOffer: false,
                 user,
             });
-
-            // Send myself as well that much msgs how many clients
 
             socket.emit(ACTIONS.ADD_PEER, {
                 peerId: clientId,
@@ -68,7 +74,6 @@ io.on('connection', (socket) => {
             });
         });
 
-        // Join the room
         socket.join(roomId);
     });
 
@@ -89,10 +94,48 @@ io.on('connection', (socket) => {
     });
 
     const leaveRoom = () => {
+        const meta = socketRoomMeta[socket.id];
+        const leaverUser = socketUserMap[socket.id];
+        // OWNER LEFT -> END ROOM
+
+        if (
+            meta?.voiceRoomId &&
+            meta?.roomOwnerId &&
+            leaverUser &&
+            idsEqual(leaverUser.id, meta.roomOwnerId)
+        ) {
+            io.to(meta.voiceRoomId).emit(ACTIONS.ROOM_ENDED, {
+                message: 'The room has ended',
+            });
+            const clients = Array.from(
+                io.sockets.adapter.rooms.get(
+                    meta.voiceRoomId
+                ) || []
+            );
+            
+            clients.forEach((clientId) => {
+            
+                const clientSocket =
+                    io.sockets.sockets.get(clientId);
+            
+                if (clientSocket) {
+                    clientSocket.leave(meta.voiceRoomId);
+                }
+            
+                delete socketRoomMeta[clientId];
+                delete socketUserMap[clientId];
+            });
+            roomService
+                .deleteRoom(meta.voiceRoomId)
+                .catch((err) => console.log(err));
+            return
+        }
+
         const { rooms } = socket;
         console.log('leaving', rooms);
-        // console.log('socketUserMap', socketUserMap);
         Array.from(rooms).forEach((roomId) => {
+            if (roomId === socket.id) return;
+
             const clients = Array.from(
                 io.sockets.adapter.rooms.get(roomId) || []
             );
@@ -106,11 +149,11 @@ io.on('connection', (socket) => {
                     peerId: clientId,
                     userId: socketUserMap[clientId]?.id,
                 });
-                
             });
             socket.leave(roomId);
         });
 
+        delete socketRoomMeta[socket.id];
         delete socketUserMap[socket.id];
 
         console.log('map', socketUserMap);

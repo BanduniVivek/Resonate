@@ -21,7 +21,10 @@ const RoomCard = ({ room }) => {
                 {room.speakers.map((speaker) => (
                     <img
                         key={speaker._id}
-                        src={speaker.avatar}
+                        src={
+                            speaker.avatar ||
+                            '/images/monkey-avatar.png'
+                        }
                         alt="speaker-avatar"
                     />
                 ))}

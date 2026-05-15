@@ -31,6 +31,35 @@ class RoomsController {
         const room = await roomService.getRoom(req.params.roomId);
         return res.json(room);
     }
+
+    async search(req, res) {
+
+        try {
+    
+            const query = req.query.query;
+    
+            if (!query) {
+                return res.json([]);
+            }
+    
+            const rooms =
+                await roomService.searchRooms(query);
+    
+            const allRooms = rooms.map(
+                (room) => new RoomDto(room)
+            );
+    
+            return res.status(200).json(allRooms);
+    
+        } catch (err) {
+    
+            console.log(err);
+    
+            return res.status(500).json({
+                message: 'Internal server error',
+            });
+        }
+    }
 }
 
 module.exports = new RoomsController();

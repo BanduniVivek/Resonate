@@ -2,7 +2,25 @@
     padding: 20px 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 16px;
+}
+
+.navLeft {
+    flex-shrink: 0;
+}
+
+.navCenter {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.navRight {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 .logoutButton {

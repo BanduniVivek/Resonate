@@ -1,82 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import AddRoomModel from "../../components/AddRoomModal/AddRoomModal"
+import { useState, useEffect } from 'react';
+import AddRoomModel from '../../components/AddRoomModal/AddRoomModal';
 import styles from './Rooms.module.css';
 import RoomCard from '../../components/RoomCard/RoomCard';
-import { getAllRooms } from '../../http';
-// const rooms = [
-//     {
-//         id: 1,
-//         topic: 'Which framework best for frontend ?',
-//         speakers: [
-//             {
-//                 id: 1,
-//                 name: 'John Doe',
-//                 avatar: '/images/monkey-avatar.png',
-//             },
-//             {
-//                 id: 2,
-//                 name: 'Jane Doe',
-//                 avatar: '/images/monkey-avatar.png',
-//             },
-//         ],
-//         totalPeople: 40,
-//     },
-//     {
-//         id: 3,
-//         topic: 'What’s new in machine learning?',
-//         speakers: [
-//             {
-//                 id: 1,
-//                 name: 'John Doe',
-//                 avatar: '/images/monkey-avatar.png',
-//             },
-//             {
-//                 id: 2,
-//                 name: 'Jane Doe',
-//                 avatar: '/images/monkey-avatar.png',
-//             },
-//         ],
-//         totalPeople: 40,
-//     },
-//     {
-//         id: 4,
-//         topic: 'Why people use stack overflow?',
-//         speakers: [
-//             {
-//                 id: 1,
-//                 name: 'John Doe',
-//                 avatar: '/images/monkey-avatar.png',
-//             },
-//             {
-//                 id: 2,
-//                 name: 'Jane Doe',
-//                 avatar: '/images/monkey-avatar.png',
-//             },
-//         ],
-//         totalPeople: 40,
-//     },
-//     {
-//         id: 5,
-//         topic: 'Artificial inteligence is the future?',
-//         speakers: [
-//             {
-//                 id: 1,
-//                 name: 'John Doe',
-//                 avatar: '/images/monkey-avatar.png',
-//             },
-//             {
-//                 id: 2,
-//                 name: 'Jane Doe',
-//                 avatar: '/images/monkey-avatar.png',
-//             },
-//         ],
-//         totalPeople: 40,
-//     },
-// ];
+import { getAllRooms, searchRooms } from '../../http';
 
 const Rooms = () => {
     const [showModal, setShowModal] = useState(false);
-    const [rooms, setRooms] = useState([]);
+    const [allRooms, setAllRooms] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState(null);
 
     function openModal() {
         setShowModal(true);
@@ -84,48 +16,98 @@ const Rooms = () => {
 
     useEffect(() => {
         const fetchRooms = async () => {
-            const { data } = await getAllRooms();
-            setRooms(data);
-            // console.log(rooms);
+            try {
+                const { data } = await getAllRooms();
+                setAllRooms(Array.isArray(data) ? data : []);
+            } catch {
+                setAllRooms([]);
+            }
         };
         fetchRooms();
     }, []);
 
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            await Promise.resolve();
+            if (cancelled) return;
+            const q = searchQuery.trim();
+            if (!q) {
+                setSearchResults(null);
+                return;
+            }
+            await new Promise((r) => setTimeout(r, 320));
+            if (cancelled) return;
+            try {
+                const { data } = await searchRooms(q);
+                if (!cancelled) {
+                    setSearchResults(Array.isArray(data) ? data : []);
+                }
+            } catch {
+                if (!cancelled) setSearchResults([]);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [searchQuery]);
 
-    return(<> <div className='container'>
-        <div className={styles.roomsHeader}>    
-            <div className={styles.left}>
-                <span className={styles.heading}>All voice rooms</span>
-                <div className={styles.searchBox}>
-                    <img src="/images/search-icon.png" alt="search" />
-                    <input type="text" className={styles.searchInput} />
+    const displayedRooms =
+        searchResults === null ? allRooms : searchResults;
+
+    return (
+        <>
+            <div className="container">
+                <div className={styles.roomsHeader}>
+                    <div className={styles.left}>
+                        <span className={styles.heading}>All voice rooms</span>
+                        <div className={styles.searchBox}>
+                            <img src="/images/search-icon.png" alt="" />
+                            <input
+                                type="search"
+                                className={styles.searchInput}
+                                placeholder="Search rooms by topic"
+                                value={searchQuery}
+                                onChange={(e) =>
+                                    setSearchQuery(e.target.value)
+                                }
+                                aria-label="Search rooms by topic"
+                            />
+                        </div>
+                    </div>
+                    <div className={styles.right}>
+                        <button
+                            type="button"
+                            onClick={openModal}
+                            className={styles.startRoomButton}
+                        >
+                            <img
+                                src="/images/add-room-icon.png"
+                                alt="add-room"
+                            />
+                            <span>Start a room</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div className={styles.roomList}>
+                    {displayedRooms.length === 0 && (
+                        <p className={styles.emptyHint}>
+                            {searchQuery.trim()
+                                ? 'No rooms match that topic.'
+                                : 'No rooms yet. Start one!'}
+                        </p>
+                    )}
+                    {displayedRooms.map((room) => (
+                        <RoomCard key={room.id} room={room} />
+                    ))}
                 </div>
             </div>
-            <div className={styles.right}>
-                <button
-                onClick={openModal}
-                className={styles.startRoomButton}
-                >
-                <img
-                    src="/images/add-room-icon.png"
-                    alt="add-room"
-                />
-                <span>Start a room</span>
-                </button>
-            </div>
-        </div>
-
-        <div className={styles.roomList}>
-            {rooms.map((room) => (
-                <RoomCard key={room.id} room={room} />
-            ))
-            }
-        </div>
-        
-    </div>
-    {showModal && <AddRoomModel onClose={() => setShowModal(false)} />}
-    
-    </>)
+            {showModal && (
+                <AddRoomModel onClose={() => setShowModal(false)} />
+            )}
+        </>
+    );
 };
 
 export default Rooms;
