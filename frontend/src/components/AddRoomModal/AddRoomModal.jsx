@@ -52,13 +52,13 @@ const AddRoomModel = ({ onClose }) => {
                         <span>Open</span>
                     </div>
                     <div
-                        onClick={() => setRoomType('social')}
+                        onClick={() => setRoomType('subscriber')}
                         className={`${styles.typeBox} ${
-                            roomType === 'social' ? styles.active : ''
+                            roomType === 'subscriber' ? styles.active : ''
                         }`}
                     >
-                        <img src="/images/social.png" alt="social" />
-                        <span>Social</span>
+                        <img src="/images/social.png" alt="subscriber" />
+                        <span>Subscriber</span>
                     </div>
                     <div
                         onClick={() => setRoomType('private')}
@@ -72,7 +72,13 @@ const AddRoomModel = ({ onClose }) => {
                 </div>
             </div>
             <div className={styles.modalFooter}>
-                <h2>Start a room, open to everyone</h2>
+                <h2>
+                    {roomType === 'private'
+                        ? 'Start a private room — share the invite code with guests'
+                        : roomType === 'subscriber'
+                          ? 'Start a subscriber-only room'
+                          : 'Start a room, open to everyone'}
+                </h2>
                 <button
                     onClick={createRoom}
                     className={styles.footerButton}

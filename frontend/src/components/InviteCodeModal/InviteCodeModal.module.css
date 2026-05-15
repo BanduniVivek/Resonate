@@ -1,0 +1,80 @@
+.modalMask {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modalBody {
+    width: 90%;
+    max-width: 400px;
+    background: #1d1d1d;
+    border-radius: 20px;
+    padding: 32px 28px;
+    position: relative;
+    text-align: center;
+}
+
+.heading {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.hint {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 24px;
+    line-height: 1.4;
+}
+
+.codeBox {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 0.2em;
+    color: #fff;
+    background: #262626;
+    border: 2px dashed #5a4a8a;
+    border-radius: 12px;
+    padding: 20px 16px;
+    margin-bottom: 20px;
+}
+
+.copyButton {
+    background: #5a4a8a;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-weight: bold;
+    width: 100%;
+    transition: background 0.2s ease;
+}
+
+.copyButton:hover {
+    background: #4a3d72;
+}
+
+.status {
+    color: #aaa;
+    margin: 16px 0;
+}
+
+.error {
+    color: #ff8a8a;
+    font-weight: bold;
+    margin: 16px 0;
+}
+
+.closeButton {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    background: none;
+}

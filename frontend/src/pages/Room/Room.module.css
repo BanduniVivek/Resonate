@@ -3,6 +3,7 @@
     flex-direction: column;
     align-items: center;
 }
+
 .userHead {
     width: 90px;
     height: 90px;
@@ -20,6 +21,154 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
+    object-fit: cover;
+}
+
+.micBadge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 30px;
+    height: 30px;
+    box-sizing: content-box;
+    border-radius: 50%;
+    padding: 5px;
+    background: #212121;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.micBadge img {
+    width: 18px;
+    height: 18px;
+}
+
+.roomPage {
+    min-height: 100vh;
+    padding-bottom: 88px;
+}
+
+.bottomBar {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+
+    width: fit-content;
+    min-width: 320px;
+
+    background: rgba(28, 28, 30, 0.92);
+    backdrop-filter: blur(18px);
+
+    border: 1px solid rgba(255, 255, 255, 0.06);
+
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+    border-radius: 24px;
+
+    padding: 12px 18px;
+}
+
+.bottomBarInner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+}
+
+.barBtn {
+    width: 64px;
+    height: 64px;
+
+    border-radius: 50%;
+
+    border: none;
+    outline: none;
+
+    background: #2b2b30;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.03),
+        0 4px 14px rgba(0,0,0,0.35);
+}
+
+.barBtn:hover {
+    transform: translateY(-2px);
+    background: #36363d;
+}
+
+.barBtn:active {
+    transform: scale(0.94);
+}
+
+.barBtn img {
+    width: 26px;
+    height: 26px;
+}
+
+
+.barBtnRaise.barBtnActive {
+    background: linear-gradient(
+        145deg,
+        #506d2a,
+        #3c5420
+    );
+
+    box-shadow:
+        0 8px 24px rgba(118, 170, 54, 0.28),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.barBtnRaise.barBtnActive:hover {
+    background: #4a5a28;
+}
+
+.barBtnMic.barBtnMuted {
+    background: #3d2020;
+    color: #ff8a8a;
+}
+
+.barBtnMic.barBtnMuted:hover {
+    background: #4d2828;
+}
+
+.barBtnLeave {
+    background: linear-gradient(
+        145deg,
+        #b93a32,
+        #922b24
+    );
+
+    box-shadow:
+        0 8px 22px rgba(185, 58, 50, 0.28),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.barBtnLeave:hover {
+    background: linear-gradient(
+        145deg,
+        #cf4a41,
+        #a4312a
+    );
+
+    box-shadow:
+        0 10px 26px rgba(207, 74, 65, 0.35);
 }
 
 .goBack {
@@ -54,8 +203,8 @@
     margin-top: 4rem;
     border-top-right-radius: 20px;
     border-top-left-radius: 20px;
-    min-height: calc(100vh - 205px);
-    padding: 2rem;
+    min-height: calc(100vh - 280px);
+    padding: 2rem 2rem 1rem;
 }
 
 .topic {
@@ -71,32 +220,6 @@
     gap: 30px;
 }
 
-.client h4{
-    font-weight : bold;
-    margin-top : 1rem;
-}
-
-.actionBtn {
-    background: #262626;
-    outline: none;
-    margin-left: 2rem;
-    display: flex;
-    align-items: center;
-    padding: 0.7rem 1rem;
-    border-radius: 20px;
-    color: #fff;
-    transition: all 0.3s ease-in-out;
-}
-
-.actionBtn:hover {
-    background: #333333;
-}
-
-.actionBtn span {
-    font-weight: bold;
-    margin-left: 1rem;
-}
-
 .header {
     display: flex;
     align-items: center;
@@ -108,20 +231,56 @@
     align-items: center;
 }
 
-.micBtn {
-    background: #212121;
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 30px;
-    height: 30px;
-    box-sizing: content-box;
-    border-radius: 30px;
-    padding: 5px;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+.actionBtn {
+    border: none;
+    outline: none;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0.7rem 1.2rem;
+
+    border-radius: 999px;
+
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+
+    color: #e7e7ea;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.12s ease,
+        box-shadow 0.2s ease;
 }
 
-.micImg {
+.actionBtn:hover {
+    background: #333333;
+}
+
+
+.inviteBtn {
+    background: rgba(88, 101, 242, 0.12);
+
+    border: 1px solid rgba(88, 101, 242, 0.28);
+
+    color: #cfd5ff;
+
+    backdrop-filter: blur(8px);
+
+    box-shadow:
+        0 4px 18px rgba(88, 101, 242, 0.12);
+}
+
+.inviteBtn:hover {
+    background: rgba(88, 101, 242, 0.18);
+
+    border-color: rgba(88, 101, 242, 0.45);
+
+    transform: translateY(-1px);
 }
 
 .roomEndedBanner {

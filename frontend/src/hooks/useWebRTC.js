@@ -4,7 +4,12 @@ import socketInit from '../socket';
 import freeice from 'freeice';
 import { ACTIONS } from '../actions';
 
-export const useWebRTC = (roomId, user, roomOwnerId, onRoomEnded) => {
+export const useWebRTC = (
+    roomId,
+    user,
+    roomOwnerId,
+    onRoomEnded,
+) => {
     const [clients, setClients] = useStateWithCallback([]);
        //set client can now also have a callback
 
@@ -71,17 +76,23 @@ export const useWebRTC = (roomId, user, roomOwnerId, onRoomEnded) => {
     useEffect(() => {
         if (!roomOwnerId) return undefined;
 
-        const startCapture = async () => {
-            localMediaStream.current =
-                await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                });
-        };
-
         let cancelled = false;
 
-        startCapture().then(() => {
+        (async () => {
+            if (cancelled) return;
+
+            try {
+                localMediaStream.current =
+                    await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                    });
+            } catch (err) {
+                console.log(err);
+                return;
+            }
+
             if (cancelled || !socket.current) return;
+
             const u = userRef.current;
             addNewClient({ ...u, muted: true }, () => {
                 const localElement = audioElements.current[u.id];
@@ -95,7 +106,7 @@ export const useWebRTC = (roomId, user, roomOwnerId, onRoomEnded) => {
                 user: u,
                 ownerId: roomOwnerId,
             });
-        });
+        })();
 
         return () => {
             cancelled = true;
@@ -301,7 +312,7 @@ export const useWebRTC = (roomId, user, roomOwnerId, onRoomEnded) => {
             if (clientIdx > -1) {
                 connectedClientsClone[clientIdx].muted = mute;
                 console.log('muuuu', connectedClientsClone);
-                setClients((_) => connectedClientsClone);
+                setClients(() => connectedClientsClone);
             }
         };
     }, []);

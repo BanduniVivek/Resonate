@@ -1,0 +1,79 @@
+.modalMask {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modalBody {
+    width: 50%;
+    max-width: 440px;
+    background: #1d1d1d;
+    border-radius: 20px;
+    position: relative;
+}
+
+.modalHeader {
+    padding: 30px;
+    border-bottom: 2px solid #262626;
+}
+
+.heading {
+    margin-bottom: 8px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.hint {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.error {
+    margin-top: 12px;
+    color: #ff8a8a;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.modalFooter {
+    padding: 24px 30px 30px;
+    text-align: center;
+}
+
+.footerButton {
+    background: #0077ff;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    transition: background 0.2s ease;
+}
+
+.footerButton:hover:not(:disabled) {
+    background: #0066dd;
+}
+
+.footerButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.closeButton {
+    position: absolute;
+    right: 3px;
+    top: 8px;
+    background: none;
+}

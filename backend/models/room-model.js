@@ -5,6 +5,12 @@ const roomSchema = new Schema(
     {
         topic: { type: String, required: true },
         roomType: { type: String, required: true },
+        status: {
+            type: String,
+            enum: ['active', 'closed'],
+            default: 'active',
+        },
+        endedAt: { type: Date, required: false },
         ownerId: { type: Schema.Types.ObjectId, ref: 'User' },
         speakers: {
             type: [
@@ -14,6 +20,20 @@ const roomSchema = new Schema(
                 },
             ],
             required: false,
+        },
+        inviteCode: {
+            type: String,
+            unique: true,
+            sparse: true,
+        },
+        allowedJoiners: {
+            type: [
+                {
+                    type: Schema.Types.ObjectId,
+                    ref: 'User',
+                },
+            ],
+            default: [],
         },
     },
     {

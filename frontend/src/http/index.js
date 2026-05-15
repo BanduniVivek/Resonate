@@ -52,10 +52,13 @@ export const activate = (data) =>
 export const logout = () =>api.post("/api/logout");
 export const createRoom = (data) => api.post('/api/rooms', data);
 export const getAllRooms = () => api.get('/api/rooms');
-export const searchRooms = (query) =>
-    api.get('/api/rooms/search', { params: { query } });
+export const getClosedRooms = () => api.get('/api/rooms/closed');
+export const searchRooms = (query) => api.get('/api/rooms/search', { params: { query } });
 export const getRoom = (roomId) => api.get(`/api/rooms/${roomId}`);
-
+export const joinRoomByCode = (code) =>
+    api.post('/api/rooms/join-by-code', { code });
+export const getRoomInviteCode = (roomId) =>
+    api.get(`/api/rooms/${roomId}/invite-code`);
 export const getProfile = (userId) => api.get(`/api/profile/${userId}`);
 
 export const followUser = (userId) => api.post(`/api/follow/${userId}`);

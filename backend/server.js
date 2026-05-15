@@ -14,6 +14,9 @@ const io = require('socket.io')(server, {
 });
 const ACTIONS = require('./actions');
 const roomService = require('./services/room-service');
+const { setIo } = require('./socket-io');
+
+setIo(io);
 
 
 app.use(cookieParser());
@@ -126,7 +129,7 @@ io.on('connection', (socket) => {
                 delete socketUserMap[clientId];
             });
             roomService
-                .deleteRoom(meta.voiceRoomId)
+                .closeRoom(meta.voiceRoomId)
                 .catch((err) => console.log(err));
             return
         }
