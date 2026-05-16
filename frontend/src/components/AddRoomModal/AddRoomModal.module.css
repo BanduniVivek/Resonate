@@ -90,3 +90,35 @@
     top: 8px;
     background: none;
 }
+
+.speakModes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.speakModeBox {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.speakModeBox.active {
+    background: #262626;
+    border-color: #3a3a3a;
+}
+
+.speakModeBox span {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.speakModeBox small {
+    font-size: 12px;
+    color: #999;
+    line-height: 1.35;
+}

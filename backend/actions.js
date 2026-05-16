@@ -10,6 +10,8 @@ const ACTIONS = {
     MUTE: 'mute',
     UNMUTE: 'unmute',
     ROOM_ENDED: 'room-ended',
+    SPEAKER_PROMOTED: 'speaker-promoted',
+    SPEAKER_DEMOTED: 'speaker-demoted',
 };
 
 module.exports = ACTIONS

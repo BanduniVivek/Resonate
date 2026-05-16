@@ -1,7 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './Room.module.css';
 import { useSelector } from 'react-redux';
-import { getRoom, getRoomInviteCode } from '../../http';
+import {
+    getRoom,
+    getRoomInviteCode,
+    promoteSpeaker,
+    demoteSpeaker,
+} from '../../http';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import InviteCodeModal from '../../components/InviteCodeModal/InviteCodeModal';
@@ -26,9 +31,13 @@ function RoomVoiceSession({ room, roomId }) {
     const [inviteCode, setInviteCode] = useState('');
     const [inviteLoading, setInviteLoading] = useState(false);
     const [inviteError, setInviteError] = useState('');
+    const [openMenuClientId, setOpenMenuClientId] = useState(null);
+    const menuRef = useRef(null);
     const ownerId = getRoomOwnerId(room);
+    const isHost = isRoomOwner(room, user.id);
+    const speakMode = room.speakMode || 'moderated';
     const isPrivateOwner =
-        room.roomType === 'private' && isRoomOwner(room, user.id);
+        room.roomType === 'private' && isHost;
 
     const onRoomEnded = useCallback((message) => {
         setRoomEndedMessage(message || 'The room has ended');
@@ -37,22 +46,44 @@ function RoomVoiceSession({ room, roomId }) {
         }, 2500);
     }, [navigate]);
 
-
     const { clients, provideRef, handleMute } = useWebRTC(
         roomId,
         user,
         String(ownerId),
+        speakMode,
+        room.speakers,
         onRoomEnded,
     );
     const [isMuted, setMuted] = useState(true);
     const [handRaised, setHandRaised] = useState(false);
 
+    const selfClient = clients.find((c) => c.id === user.id);
+    const speakers = clients.filter((c) => c.isSpeaker);
+    const listeners = clients.filter((c) => !c.isSpeaker);
+
     useEffect(() => {
         handleMute(isMuted, user.id);
     }, [isMuted, handleMute, user.id]);
 
-    const handleMuteClick = (clientId) => {
-        if (clientId !== user.id) return;
+    useEffect(() => {
+        if (selfClient?.muted) {
+            setMuted(true);
+        }
+    }, [selfClient?.muted]);
+
+    useEffect(() => {
+        if (!openMenuClientId) return undefined;
+        const onDocClick = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setOpenMenuClientId(null);
+            }
+        };
+        document.addEventListener('mousedown', onDocClick);
+        return () => document.removeEventListener('mousedown', onDocClick);
+    }, [openMenuClientId]);
+
+    const handleMuteClick = () => {
+        if (!selfClient?.isSpeaker) return;
         setMuted((prev) => !prev);
     };
 
@@ -77,7 +108,122 @@ function RoomVoiceSession({ room, roomId }) {
         }
     }
 
-    const selfClient = clients.find((c) => c.id === user.id);
+    async function handlePromote(clientId) {
+        setOpenMenuClientId(null);
+        try {
+            await promoteSpeaker(roomId, clientId);
+        } catch (err) {
+            console.log(err.response?.data?.message || err.message);
+        }
+    }
+
+    async function handleDemote(clientId) {
+        setOpenMenuClientId(null);
+        try {
+            await demoteSpeaker(roomId, clientId);
+        } catch (err) {
+            console.log(err.response?.data?.message || err.message);
+        }
+    }
+
+    function getMenuOptions(client) {
+        if (!isHost || String(client.id) === String(user.id)) return [];
+
+        const options = [];
+        if (!client.isSpeaker && speakMode === 'moderated') {
+            options.push({
+                label: 'Make speaker',
+                action: () => handlePromote(client.id),
+            });
+        }
+        if (client.isSpeaker) {
+            options.push({
+                label: 'Remove speaker',
+                action: () => handleDemote(client.id),
+            });
+        }
+        return options;
+    }
+
+    function renderClient(client) {
+        const menuOptions = getMenuOptions(client);
+        const showMenu = menuOptions.length > 0;
+
+        return (
+            <div className={styles.client} key={client.id}>
+                <div
+                    className={`${styles.userHead} ${
+                        client.isSpeaker && !client.muted
+                            ? styles.userHeadSpeaker
+                            : ''
+                    }`}
+                >
+                    <img
+                        className={styles.userAvatar}
+                        src={
+                            client.avatar || '/images/monkey-avatar.png'
+                        }
+                        alt=""
+                    />
+                    <audio
+                        autoPlay
+                        playsInline
+                        ref={(instance) => {
+                            provideRef(instance, client.id);
+                        }}
+                    />
+                    {client.muted && (
+                        <span
+                            className={styles.micBadge}
+                            aria-label="Muted"
+                        >
+                            <img src="/images/mic-mute.png" alt="" />
+                        </span>
+                    )}
+                    {showMenu && (
+                        <div
+                            className={styles.clientMenuWrap}
+                            ref={
+                                openMenuClientId === client.id
+                                    ? menuRef
+                                    : null
+                            }
+                        >
+                            <button
+                                type="button"
+                                className={styles.clientMenuBtn}
+                                aria-label="Speaker options"
+                                onClick={() =>
+                                    setOpenMenuClientId((prev) =>
+                                        prev === client.id
+                                            ? null
+                                            : client.id
+                                    )
+                                }
+                            >
+                                ⋮
+                            </button>
+                            {openMenuClientId === client.id && (
+                                <div className={styles.clientMenu}>
+                                    {menuOptions.map((opt) => (
+                                        <button
+                                            key={opt.label}
+                                            type="button"
+                                            className={styles.clientMenuItem}
+                                            onClick={opt.action}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <h4>{client.name}</h4>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.roomPage}>
@@ -120,40 +266,54 @@ function RoomVoiceSession({ room, roomId }) {
                         </div>
                     )}
                 </div>
-                <div className={styles.clientsList}>
-                    {clients.map((client) => (
-                        <div className={styles.client} key={client.id}>
-                            <div className={styles.userHead}>
-                                <img
-                                    className={styles.userAvatar}
-                                    src={
-                                        client.avatar ||
-                                        '/images/monkey-avatar.png'
-                                    }
-                                    alt=""
-                                />
-                                <audio
-                                    autoPlay
-                                    playsInline
-                                    ref={(instance) => {
-                                        provideRef(instance, client.id);
-                                    }}
-                                />
-                                {client.muted && (
-                                    <span
-                                        className={styles.micBadge}
-                                        aria-label="Muted"
-                                    >
-                                        <img
-                                            src="/images/mic-mute.png"
-                                            alt=""
-                                        />
-                                    </span>
-                                )}
-                            </div>
-                            <h4>{client.name}</h4>
+                <div className={styles.stage}>
+                    <section
+                        className={styles.speakersSection}
+                        aria-label="Speakers"
+                    >
+                        <h3 className={styles.sectionLabel}>
+                            Speakers
+                            <span className={styles.sectionCount}>
+                                {speakers.length}
+                            </span>
+                        </h3>
+                        <div className={styles.clientsList}>
+                            {speakers.length === 0 ? (
+                                <p className={styles.sectionEmpty}>
+                                    No speakers yet
+                                </p>
+                            ) : (
+                                speakers.map(renderClient)
+                            )}
                         </div>
-                    ))}
+                    </section>
+
+                    <div
+                        className={styles.stageDivider}
+                        role="separator"
+                        aria-hidden="true"
+                    />
+
+                    <section
+                        className={styles.listenersSection}
+                        aria-label="Listeners"
+                    >
+                        <h3 className={styles.sectionLabel}>
+                            Listeners
+                            <span className={styles.sectionCount}>
+                                {listeners.length}
+                            </span>
+                        </h3>
+                        <div className={styles.clientsList}>
+                            {listeners.length === 0 ? (
+                                <p className={styles.sectionEmpty}>
+                                    No listeners
+                                </p>
+                            ) : (
+                                listeners.map(renderClient)
+                            )}
+                        </div>
+                    </section>
                 </div>
             </div>
 
@@ -174,24 +334,35 @@ function RoomVoiceSession({ room, roomId }) {
                         title={handRaised ? 'Lower hand' : 'Raise hand'}
                     >
                         <img
-    src={
-        handRaised
-            ? '/images/hand-stop.png'
-            : '/images/hand-off.png'
-    }
-    alt=""
-/>
+                            src={
+                                handRaised
+                                    ? '/images/hand-stop.png'
+                                    : '/images/hand-off.png'
+                            }
+                            alt=""
+                        />
                     </button>
                     <button
                         type="button"
-                        onClick={() => handleMuteClick(user.id)}
+                        onClick={handleMuteClick}
+                        disabled={!selfClient?.isSpeaker}
                         className={`${styles.barBtn} ${styles.barBtnMic} ${
                             selfClient?.muted ? styles.barBtnMuted : ''
-                        }`}
+                        } ${!selfClient?.isSpeaker ? styles.barBtnDisabled : ''}`}
                         aria-label={
-                            selfClient?.muted ? 'Unmute microphone' : 'Mute microphone'
+                            !selfClient?.isSpeaker
+                                ? 'Only speakers can unmute'
+                                : selfClient?.muted
+                                  ? 'Unmute microphone'
+                                  : 'Mute microphone'
                         }
-                        title={selfClient?.muted ? 'Unmute' : 'Mute'}
+                        title={
+                            !selfClient?.isSpeaker
+                                ? 'Only speakers can unmute'
+                                : selfClient?.muted
+                                  ? 'Unmute'
+                                  : 'Mute'
+                        }
                     >
                         <img
                             src={
@@ -209,7 +380,6 @@ function RoomVoiceSession({ room, roomId }) {
                         title="Leave room"
                     >
                         <img src="/images/phone-off.png" alt="" />
-                        
                     </button>
                 </div>
             </nav>
@@ -229,17 +399,21 @@ const Room = () => {
                 const { data } = await getRoom(roomId);
                 if (cancelled) return;
                 setRoom(data);
-            } catch(err){
+            } catch (err) {
                 if (cancelled) return;
                 setRoom(null);
-                const message = err.response?.data?.message || 'Could not load this room.';
-                navigate('/rooms', { state: { accessDeniedMessage: message } });
+                const message =
+                    err.response?.data?.message ||
+                    'Could not load this room.';
+                navigate('/rooms', {
+                    state: { accessDeniedMessage: message },
+                });
             }
         })();
         return () => {
             cancelled = true;
         };
-    }, [roomId]);
+    }, [roomId, navigate]);
 
     if (!room) {
         return (

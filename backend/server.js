@@ -14,7 +14,7 @@ const io = require('socket.io')(server, {
 });
 const ACTIONS = require('./actions');
 const roomService = require('./services/room-service');
-const { setIo } = require('./socket-io');
+const { setIo, registerSocketUserMap } = require('./socket-io');
 
 setIo(io);
 
@@ -43,6 +43,7 @@ app.get('/', (req, res) => {
 // Sockets
 const socketUserMap = {};
 const socketRoomMeta = {};
+registerSocketUserMap(socketUserMap);
 
 function idsEqual(a, b) {
     if (a == null || b == null) return false;
@@ -51,23 +52,51 @@ function idsEqual(a, b) {
 
 io.on('connection', (socket) => {
     console.log('New connection', socket.id);
-    socket.on(ACTIONS.JOIN, ({ roomId, user, ownerId }) => {
-        socketUserMap[socket.id] = user;
+    socket.on(ACTIONS.JOIN, async ({ roomId, user, ownerId }) => {
+        if (!roomId || !user?.id) return;
+
+        const room = await roomService.getRoom(roomId);
+        if (!room || room.status === 'closed') return;
+
+        const ownerIdStr =
+            ownerId !== undefined && ownerId !== null
+                ? String(ownerId)
+                : '';
+
+        await roomService.ensureSpeakerOnJoin(
+            roomId,
+            user.id,
+            room.speakMode || 'moderated'
+        );
+
+        const freshRoom = await roomService.getRoom(roomId);
+        const isSpeaker = roomService.isUserSpeaker(freshRoom, user.id);
+        const peerUser = { ...user, isSpeaker, muted: true };
+
+        socketUserMap[socket.id] = peerUser;
         socketRoomMeta[socket.id] = {
             voiceRoomId: roomId,
-            roomOwnerId:
-                ownerId !== undefined && ownerId !== null
-                    ? String(ownerId)
-                    : '',
+            roomOwnerId: ownerIdStr,
         };
 
         const clients = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
 
         clients.forEach((clientId) => {
+            const existing = socketUserMap[clientId];
+            if (existing) {
+                socketUserMap[clientId] = {
+                    ...existing,
+                    isSpeaker: roomService.isUserSpeaker(
+                        freshRoom,
+                        existing.id
+                    ),
+                };
+            }
+
             io.to(clientId).emit(ACTIONS.ADD_PEER, {
                 peerId: socket.id,
                 createOffer: false,
-                user,
+                user: peerUser,
             });
 
             socket.emit(ACTIONS.ADD_PEER, {

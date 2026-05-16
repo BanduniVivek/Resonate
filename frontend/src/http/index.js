@@ -59,6 +59,10 @@ export const joinRoomByCode = (code) =>
     api.post('/api/rooms/join-by-code', { code });
 export const getRoomInviteCode = (roomId) =>
     api.get(`/api/rooms/${roomId}/invite-code`);
+export const promoteSpeaker = (roomId, userId) =>
+    api.post(`/api/rooms/${roomId}/speakers/${userId}`);
+export const demoteSpeaker = (roomId, userId) =>
+    api.delete(`/api/rooms/${roomId}/speakers/${userId}`);
 export const getProfile = (userId) => api.get(`/api/profile/${userId}`);
 
 export const followUser = (userId) => api.post(`/api/follow/${userId}`);
@@ -77,5 +81,3 @@ export const updateProfile = (formData) =>
             },
         ],
     });
-
-export default api;

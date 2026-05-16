@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Card from '../../../components/shared/Card/Card';
 import Button from '../../../components/shared/Button/Button';
 import styles from './StepAvatar.module.css';
 import { useSelector, useDispatch } from 'react-redux';
-import { setAvatar } from '../../../store/activateSlice';
 import { activate } from '../../../http';
 import { setAuth } from '../../../store/authSlice';
 import Loader from '../../../components/shared/Loader/Loader';
@@ -11,7 +10,7 @@ import Loader from '../../../components/shared/Loader/Loader';
 
 const StepAvatar = ({ onNext }) => {
     const dispatch = useDispatch();
-    const { name } = useSelector((state) => state.activate);  //add avatar also here if does not work anywhere
+    const { name } = useSelector((state) => state.activate);
 
     const [image, setImage] = useState('/images/monkey-avatar.png');
     const [avatar, setAvatar] = useState(null);  //redux only support serializable data

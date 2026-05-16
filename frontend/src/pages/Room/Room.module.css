@@ -148,6 +148,18 @@
     background: #4d2828;
 }
 
+.barBtnMic.barBtnDisabled,
+.barBtnMic:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.barBtnMic.barBtnDisabled:hover,
+.barBtnMic:disabled:hover {
+    background: inherit;
+}
+
 .barBtnLeave {
     background: linear-gradient(
         145deg,
@@ -205,6 +217,8 @@
     border-top-left-radius: 20px;
     min-height: calc(100vh - 280px);
     padding: 2rem 2rem 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .topic {
@@ -212,10 +226,113 @@
     font-weight: bold;
 }
 
-.clientsList {
-    margin-top: 2rem;
+.stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-top: 1.5rem;
+}
+
+.speakersSection {
+    flex: 1;
+    min-height: 38vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 1rem;
+}
+
+.listenersSection {
+    flex: 1;
+    min-height: 28vh;
+    display: flex;
+    flex-direction: column;
+    padding-top: 1rem;
+}
+
+.stageDivider {
+    flex-shrink: 0;
+    height: 1px;
+    margin: 0.5rem 0 1rem;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #444 20%,
+        #444 80%,
+        transparent
+    );
+    position: relative;
+}
+
+.stageDivider::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #333;
+    border: 1px solid #555;
+}
+
+.sectionLabel {
     display: flex;
     align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin: 0 0 1rem;
+}
+
+.speakersSection .sectionLabel {
+    color: #8b9dff;
+}
+
+.sectionCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #2a2a2a;
+    color: #ccc;
+}
+
+.speakersSection .sectionCount {
+    background: rgba(84, 83, 224, 0.25);
+    color: #b8bcff;
+}
+
+.sectionEmpty {
+    color: #666;
+    font-size: 15px;
+    margin: 1rem 0;
+}
+
+.userHeadSpeaker {
+    border-color: #20bd5f;
+    box-shadow: 0 0 0 2px rgba(32, 189, 95, 0.15);
+}
+
+.listenersSection .userHead {
+    border-color: #444;
+    opacity: 0.92;
+}
+
+.clientsList {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    align-content: flex-start;
     flex-wrap: wrap;
     gap: 30px;
 }
@@ -308,4 +425,56 @@
 .loadError {
     color: #ff8a8a;
     margin-bottom: 1rem;
+}
+
+.clientMenuWrap {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+}
+
+.clientMenuBtn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #e7e7ea;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clientMenu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    min-width: 150px;
+    background: #2a2a2a;
+    border: 1px solid #3d3d3d;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.clientMenuItem {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    background: none;
+    color: #e7e7ea;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.clientMenuItem:hover {
+    background: #383838;
 }

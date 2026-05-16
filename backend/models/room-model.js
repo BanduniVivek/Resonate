@@ -5,6 +5,11 @@ const roomSchema = new Schema(
     {
         topic: { type: String, required: true },
         roomType: { type: String, required: true },
+        speakMode: {
+            type: String,
+            enum: ['moderated', 'open'],
+            default: 'moderated',
+        },
         status: {
             type: String,
             enum: ['active', 'closed'],

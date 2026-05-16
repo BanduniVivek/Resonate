@@ -21,6 +21,8 @@ router.get('/api/rooms/closed', authMiddleware, roomsController.closed);
 router.post('/api/rooms/join-by-code', authMiddleware, roomsController.joinByCode);
 router.get('/api/rooms/:roomId/invite-code',authMiddleware,roomsController.inviteCode);
 router.get('/api/rooms/:roomId',authMiddleware,roomAccessMiddleware,roomsController.show);
+router.post('/api/rooms/:roomId/speakers/:userId',authMiddleware,roomsController.promoteSpeaker);
+router.delete('/api/rooms/:roomId/speakers/:userId',authMiddleware,roomsController.demoteSpeaker);
 router.post('/api/follow/:id',authMiddleware,socialController.follow);
 router.post('/api/unfollow/:id',authMiddleware,socialController.unfollow);
 router.get('/api/profile/:id',authMiddleware,profileController.getProfile);

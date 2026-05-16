@@ -38,11 +38,25 @@ class RoomService {
         throw new Error('Could not generate invite code');
     }
 
+    isUserSpeaker(room, userId) {
+        if (!room || userId == null) return false;
+        const ownerId = room.ownerId?._id ?? room.ownerId;
+        if (idsEqual(ownerId, userId)) return true;
+        return (room.speakers || []).some((s) =>
+            idsEqual(s?._id ?? s, userId)
+        );
+    }
+
     async create(payload) {
-        const { topic, roomType, ownerId } = payload;
+        const { topic, roomType, ownerId, speakMode = 'moderated' } = payload;
+        const allowedSpeakModes = ['moderated', 'open'];
+        const mode = allowedSpeakModes.includes(speakMode)
+            ? speakMode
+            : 'moderated';
         const doc = {
             topic,
             roomType,
+            speakMode: mode,
             ownerId,
             speakers: [ownerId],
         };
@@ -53,14 +67,6 @@ class RoomService {
 
         const room = await RoomModel.create(doc);
         return room;
-    }
-
-    async getAllRooms(types) {
-        const rooms = await RoomModel.find({ roomType: { $in: types } })
-            .populate('speakers')
-            .populate('ownerId')
-            .exec();
-        return rooms;
     }
 
     async getRoomsVisibleToUser(userId) {
@@ -140,15 +146,6 @@ class RoomService {
         return rooms;
     }
 
-    async getRoomByInviteCode(rawCode) {
-        const code = normalizeInviteCode(rawCode);
-        if (!code) return null;
-
-        return RoomModel.findOne({ inviteCode: code })
-            .populate('ownerId', 'name avatar')
-            .exec();
-    }
-
     async grantJoinByInviteCode(userId, rawCode) {
         const code = normalizeInviteCode(rawCode);
         if (!code) {
@@ -223,8 +220,59 @@ class RoomService {
     async getRoom(roomId) {
         const room = await RoomModel.findById(roomId)
             .populate('ownerId', 'name avatar')
+            .populate('speakers', 'name avatar')
             .exec();
         return room;
+    }
+
+    async ensureSpeakerOnJoin(roomId, userId, speakMode) {
+        if (speakMode !== 'open' || !roomId || userId == null) return;
+        await RoomModel.updateOne(
+            { _id: roomId },
+            { $addToSet: { speakers: userId } }
+        );
+    }
+
+    async addSpeaker(roomId, targetUserId, ownerUserId) {
+        const room = await RoomModel.findById(roomId);
+        if (!room) {
+            return { error: 'not_found', message: 'Room not found' };
+        }
+        if (room.status === 'closed') {
+            return { error: 'ended', message: 'This room has ended' };
+        }
+        if (!idsEqual(room.ownerId, ownerUserId)) {
+            return { error: 'forbidden', message: 'Only the host can promote speakers' };
+        }
+        if (idsEqual(room.ownerId, targetUserId)) {
+            return { error: 'invalid', message: 'Host is already a speaker' };
+        }
+        await RoomModel.updateOne(
+            { _id: roomId },
+            { $addToSet: { speakers: targetUserId } }
+        );
+        return { room: await this.getRoom(roomId) };
+    }
+
+    async removeSpeaker(roomId, targetUserId, ownerUserId) {
+        const room = await RoomModel.findById(roomId);
+        if (!room) {
+            return { error: 'not_found', message: 'Room not found' };
+        }
+        if (room.status === 'closed') {
+            return { error: 'ended', message: 'This room has ended' };
+        }
+        if (!idsEqual(room.ownerId, ownerUserId)) {
+            return { error: 'forbidden', message: 'Only the host can remove speakers' };
+        }
+        if (idsEqual(room.ownerId, targetUserId)) {
+            return { error: 'invalid', message: 'Cannot remove the host as speaker' };
+        }
+        await RoomModel.updateOne(
+            { _id: roomId },
+            { $pull: { speakers: targetUserId } }
+        );
+        return { room: await this.getRoom(roomId) };
     }
 
     async closeRoom(roomId) {
@@ -233,11 +281,6 @@ class RoomService {
             { _id: roomId },
             { status: 'closed', endedAt: new Date() }
         );
-    }
-
-    async deleteRoom(roomId) {
-        if (!roomId) return;
-        await RoomModel.deleteOne({ _id: roomId });
     }
 
     async searchRooms(query, userId) {

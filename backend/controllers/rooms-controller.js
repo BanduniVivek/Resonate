@@ -1,10 +1,16 @@
 const RoomDto = require('../dtos/room-dto.js');
 const roomService = require('../services/room-service.js');
+const ACTIONS = require('../actions');
+const {
+    broadcastToRoom,
+    broadcastMuteToRoom,
+    syncUserSpeakerStatus,
+} = require('../socket-io');
 
 class RoomsController {
     async create(req, res) {
         // room
-        const { topic, roomType } = req.body;
+        const { topic, roomType, speakMode } = req.body;
 
         if (!topic || !roomType) {
             return res
@@ -20,6 +26,7 @@ class RoomsController {
         const room = await roomService.create({
             topic,
             roomType,
+            speakMode,
             ownerId: req.user._id,
         });
 
@@ -30,10 +37,6 @@ class RoomsController {
         const rooms = await roomService.getRoomsVisibleToUser(req.user._id);
         const allRooms = rooms.map((room) => new RoomDto(room));
         return res.json(allRooms);
-    }
-
-    async checkAccess(req, res) {
-        return res.status(200).json({ allowed: true });
     }
 
     async show(req, res) {
@@ -97,6 +100,69 @@ class RoomsController {
             }
 
             return res.json({ inviteCode: result.inviteCode });
+        } catch (err) {
+            console.log(err);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    }
+
+    async promoteSpeaker(req, res) {
+        try {
+            const { roomId, userId } = req.params;
+            const result = await roomService.addSpeaker(
+                roomId,
+                userId,
+                req.user._id
+            );
+
+            if (result.error) {
+                const status =
+                    result.error === 'forbidden'
+                        ? 403
+                        : result.error === 'not_found'
+                          ? 404
+                          : 400;
+                return res.status(status).json({ message: result.message });
+            }
+
+            syncUserSpeakerStatus(userId, true);
+            broadcastToRoom(roomId, ACTIONS.SPEAKER_PROMOTED, {
+                userId: String(userId),
+            });
+
+            return res.json(new RoomDto(result.room));
+        } catch (err) {
+            console.log(err);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    }
+
+    async demoteSpeaker(req, res) {
+        try {
+            const { roomId, userId } = req.params;
+            const result = await roomService.removeSpeaker(
+                roomId,
+                userId,
+                req.user._id
+            );
+
+            if (result.error) {
+                const status =
+                    result.error === 'forbidden'
+                        ? 403
+                        : result.error === 'not_found'
+                          ? 404
+                          : 400;
+                return res.status(status).json({ message: result.message });
+            }
+
+            syncUserSpeakerStatus(userId, false, { muted: true });
+            broadcastToRoom(roomId, ACTIONS.SPEAKER_DEMOTED, {
+                userId: String(userId),
+            });
+            broadcastMuteToRoom(roomId, String(userId));
+
+            return res.json(new RoomDto(result.room));
         } catch (err) {
             console.log(err);
             return res.status(500).json({ message: 'Internal server error' });

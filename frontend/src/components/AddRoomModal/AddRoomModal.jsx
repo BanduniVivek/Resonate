@@ -8,12 +8,13 @@ const AddRoomModel = ({ onClose }) => {
   const navigate = useNavigate();
   const [topic, setTopic] = useState('');
   const [roomType, setRoomType] = useState('open');
+  const [speakMode, setSpeakMode] = useState('moderated');
 
 
   async function createRoom() {
     try {
         if (!topic) return;
-        const { data } = await create({ topic, roomType });
+        const { data } = await create({ topic, roomType, speakMode });
         navigate(`/room/${data.id}`);
         console.log(data);
     } catch (err) {
@@ -68,6 +69,27 @@ const AddRoomModel = ({ onClose }) => {
                     >
                         <img src="/images/lock.png" alt="lock" />
                         <span>Private</span>
+                    </div>
+                </div>
+                <h2 className={styles.subHeading}>Who can speak?</h2>
+                <div className={styles.speakModes}>
+                    <div
+                        onClick={() => setSpeakMode('moderated')}
+                        className={`${styles.speakModeBox} ${
+                            speakMode === 'moderated' ? styles.active : ''
+                        }`}
+                    >
+                        <span>Everyone joins muted</span>
+                        <small>Listeners need host approval to speak</small>
+                    </div>
+                    <div
+                        onClick={() => setSpeakMode('open')}
+                        className={`${styles.speakModeBox} ${
+                            speakMode === 'open' ? styles.active : ''
+                        }`}
+                    >
+                        <span>Free to speak</span>
+                        <small>Anyone can unmute when they join</small>
                     </div>
                 </div>
             </div>

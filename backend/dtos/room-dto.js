@@ -4,6 +4,7 @@ class RoomDto {
     id;
     topic;
     roomType;
+    speakMode;
     status;
     speakers;
     ownerId;
@@ -15,6 +16,7 @@ class RoomDto {
         this.id = room._id;
         this.topic = room.topic;
         this.roomType = room.roomType;
+        this.speakMode = room.speakMode || 'moderated';
         this.status = room.status || 'active';
         this.ownerId = room.ownerId;
         this.speakers = room.speakers;
